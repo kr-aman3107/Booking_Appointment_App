@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <h1 class="header">Booking Appointment App</h1>
+    <main class="main-container">
+        <form id="user-form" class="form-container">
+            <input type="hidden" id="user-id" name="id">
+            <label for="username" class="label">Username: </label>
+            <input type="text" name="username" id="username" class="input-field" required>
+            
+            <label for="phonenumber" class="label">Phone Number: </label>
+            <input type="number" name="phonenumber" id="phonenumber" class="input-field" required>
+            
+            <label for="email" class="label">Email: </label>
+            <input type="email" name="email" id="email" class="input-field" required>
+            
+            <button type="submit" class="submit-button">Submit</button>
+        </form>
+        <ul id="user-list" class="user-list"></ul>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/users')
+                .then(response => response.json())
+                .then(users => {
+                    const userList = document.getElementById('user-list');
+                    userList.innerHTML = '';
+                    users.forEach(user => {
+                        const li = document.createElement('li');
+                        li.className = 'user-list-item';
+                        li.textContent = `Username: ${user.username}, Phone: ${user.phonenumber}, Email: ${user.email}`;
+                        
+                        // Create Edit Button
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Edit';
+                        editButton.onclick = () => populateForm(user);
+                        
+                        // Create Delete Button
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => deleteUser(user.id);
+                        
+                        li.appendChild(editButton);
+                        li.appendChild(deleteButton);
+                        
+                        userList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error fetching users:', error));
+        });
+
+        document.getElementById('user-form').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const id = document.getElementById('user-id').value;
+            const username = document.getElementById('username').value;
+            const phonenumber = document.getElementById('phonenumber').value;
+            const email = document.getElementById('email').value;
+
+            const url = id ? `/api/users/${id}` : '/api/users';
+            const method = id ? 'PUT' : 'POST';
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, phonenumber, email })
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); // Refresh the page to reflect changes
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        function populateForm(user) {
+            document.getElementById('user-id').value = user.id;
+            document.getElementById('username').value = user.username;
+            document.getElementById('phonenumber').value = user.phonenumber;
+            document.getElementById('email').value = user.email;
+        }
+
+        function deleteUser(id) {
+            fetch(`/api/users/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); // Refresh the page to reflect changes
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
